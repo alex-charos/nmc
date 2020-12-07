@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nordic Marina Configurator</title>
+
+   <script src="https://www.gstatic.com/firebasejs/8.0.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.0.1/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 
+      initialize the SDK after all desired features are loaded, set useEmulator to false
+      to avoid connecting the SDK to running emulators.
+    -->
+
+    <style media="screen">
+      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      #message { background: white; max-width: 90%; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px;  margin-bottom: 400px;}
+      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
+      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
+      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
+      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
+      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
+      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+      @media (max-width: 600px) {
+        body, #message { margin-top: 0; background: white; box-shadow: none; }
+        body { border-top: 16px solid #ffa100; }
+      }
+      #top {background: white;  margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px;  }
+
+      #bottom {background: white;  overflow: hidden;   position: fixed; bottom: 0;  width: 100%; left:0;}
+
+      #total-price {color: #060;}
+    </style>
+
+    <script>
+var firebaseConfig = {
+    apiKey: "AIzaSyAMbvIOKfCJbY57YKlB9EgLRzFXGitJCGQ",
+    authDomain: "configurator-test-6a3f2.firebaseapp.com",
+    databaseURL: "https://configurator-test-6a3f2.firebaseio.com",
+    projectId: "configurator-test-6a3f2",
+    storageBucket: "configurator-test-6a3f2.appspot.com",
+    messagingSenderId: "914511984873",
+    appId: "1:914511984873:web:9a2e41aa429f17389f1878"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+
+var db = firebase.firestore();
+
+    </script>
+  </head>
+  <body>
+<div id="app">
+        <!--
+        <div class="sticky-top" id= "top">
+          <div id="selector" v-if="false">
+          Select a boat:
+       <select v-model="selectedBoat" @change="initSelection($event)" >
+          <option v-for="boat in boats" v-bind:value="boat" >
+          {{ boat.model }} costing {{boat.price/100}} with {{boat.optionalFeatures.length}} extras
+          </option>
+          
+        </select>
+        </div>
+   ol>
+    <li v-for="boat in boats">
+      {{ boat.model }} costing {{boat.price/100}} with {{boat.optionalFeatures.length}} extras
+       <input type="radio" :id="boat.id" :value="boat" v-model="selectedBoat" @change="handleBoats(boat)">
+              <label :for="boat.id">{{boat.model}}</label>
+                 
+    </li>
+
+  </ol>
+
+ </div>-->
+<div id="message"  class="container">
+  <div class="row">
+    <div class="col">
+      <h1>Standard Equipment </h1>
+    </div>
+  </div>
+  <div class="row" v-for="eq in selectedBoat.standard">
+    <div class="col" >
+      {{ eq.description }}             
+    </div>
+  </div>
+   <p />
+  <div class="row">
+    <div class="col" >
+      <h1> Engine Options </h1>
+    </div>
+  </div>
+  <div class="row" v-for="eq in selectedBoat.engineOptions">
+    <div class="col-1">
+      <input type="radio" :id="eq.description" :value="eq" v-model="selectedEngine"></input>
+    </div>
+    <div class="col-9">
+       <label :for="eq.description">{{eq.description}} </label>
+    </div>
+    <div class="col-2">
+      {{formatPrice(eq.price)}} 
+    </div>
+  </div>
+  <p />
+  <div class="row" v-if="selectedBoat.optionalPackages.length">
+    <div class="col">
+      <h1> Equipment Packages </h1>
+    </div>
+  </div>
+  <div class="row" v-for="eq in selectedBoat.optionalPackages">
+    <div class="col-1">
+      <input type="checkbox" :id="eq.description" :value="eq" v-model="selectedOptionalPackage"  
+      > </input>
+     <!--@change="packageSelected(eq, $event.target.checked)" --> 
+    </div>
+    <div class="col-9">
+        <label :for="eq.description" >{{eq.description}}     </label>   
+         <ul>
+        <li v-for="l in eq.details">
+          {{l}}
+        </li>
+      </ul>
+    </div>
+    <div class="col-2">
+        {{formatPrice(eq.price)}} 
+    </div>
+  </div>
+   <p />
+  <div class="row">
+    <div class="col">
+      <h1> Optional equipment </h1>
+    </div>
+  </div>
+  <div class="row" v-for="eq in selectedBoat.optionalFeatures">
+    <div class="col-1">
+      <input type="checkbox" :id="eq.description" :value="eq" v-model="selectedEquipment"></input>  
+    </div>
+    <div class="col-9">
+      <label :for="eq.description" >{{eq.description}}   </label>   
+    </div>
+    <div class="col-2">
+      {{ formatPrice(eq.price)}} 
+    </div>
+  </div>
+  <div class="row"   v-if="selectedBoat.price!==undefined">
+    <div class="col-12">
+    <b>Total:</b>
+    <div id="total-price">
+      {{formatPrice(totalCost)}} 
+    </div>
+    <br />
+    <i>* Prices incl. delivery at our facility, excl. VAT. For a tailor made quotation please get in contact with us. </i>
+    <p />
+   <!-- <form @submit.prevent="submit">
+    
+        <div class="form-group row">
+           <label class="col-sm-1 col-form-label" for="firstName">Name</label>
+          <div class="col-sm-2">
+            <input type="text" placeholder="First Name" name="firstName" id="firstName" required="" v-model="firstName">
+          </div>
+          <div class="col-sm-2">  
+          
+            <input type="text" name="firstName" placeholder="Last Name"  id="lastName" required="" v-model="lastName">
+          </div>
+        
+        </div>
+        <div class=" form-group row">
+          <label class="col-sm-1 col-form-label" for="phone">Contact</label>
+
+          <div class="col-sm-2">
+            <input type="email" placeholder="Email" name="email" id="email" required=""
+                 :class="{ email , error: !email.valid }"
+                 v-model="email">
+            </div>
+          <div class="col-sm-2">
+
+            <input type="text" placeholder="Phone #" name="Phone" id="Phone" 
+                 v-model="phone">
+            </div>
+               <div class="col-6">
+            &nbsp;
+          </div>
+        </div>
+
+        <div class=" form-group row">
+          <div class="col-sm-2">
+          <input type="checkbox" name="contactMe" id="contactMe"  v-model="contactMe">
+          <label class="label" for="contactMe"> I want to be contacted </label>
+          </div>
+          <div class="col-sm-4">
+          <input type="checkbox" name="sendACopyToMe" id="sendACopyToMe"  v-model="sendACopyToMe">
+          <label class="label" for="sendACopyToMe">      I would like a copy emailed to me </label>
+        </div>
+        </div>
+
+
+        <div>
+          <input type="submit" value="Send Request">
+        </div>
+    
+    </form> -->
+  </div>
+  </div>
+</div>
+</div>
+<script>
+   // Regular expression from W3C HTML5.2 input specification:
+// https://www.w3.org/TR/html/sec-forms.html#email-state-typeemail
+var emailRegExp = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    message: 'Welcome',
+    boats: [],
+    selectedBoat:{},
+    selectedEquipment:[],
+    selectedOptionalPackage:[],
+    selectedEngine: {},
+    selectedBoatModel: undefined,
+    firstName:'',
+    lastName:'',
+    phone:'',
+    email: '',
+    contactMe: false,
+    sendACopyToMe: false
+
+  
+  },
+  created()
+  {
+
+    let uri = window.location.href.split('?');
+    if (uri.length == 2)
+    {
+      let vars = uri[1].split('&');
+      let getVars = {};
+      let tmp = '';
+      vars.forEach(function(v){
+        tmp = v.split('=');
+        if(tmp.length == 2)
+        getVars[tmp[0]] = decodeURIComponent(tmp[1]);
+      });
+      console.log(getVars);
+      this.selectedBoatModel = getVars.boat;
+      // do 
+    }
+  },
+
+  computed: {
+
+    totalCost : function(){
+      if (this.selectedBoat!==undefined) {
+      var boatCost = this.selectedBoat.price;
+
+      if (this.selectedEngine!==undefined && this.selectedEngine.price!==undefined) {
+        boatCost += this.selectedEngine.price;
+      }
+    //  if (this.selectedOptionalPackage!==undefined && this.selectedOptionalPackage.price!==undefined) {
+     //   boatCost += this.selectedOptionalPackage.price;
+     // }
+    var eqCost = this.selectedEquipment.reduce(function(total, item){
+        return total + item.price; 
+    },0);
+        var selPast = this.selectedOptionalPackage.reduce(function(total, item){
+        return total + item.price; 
+    },0);
+
+
+    boatCost += eqCost;
+    boatCost += selPast;
+    return boatCost;
+  }
+  return 'N/A';
+    },
+    totalEquipmentCost: function(){
+      return this.selectedEquipment.reduce(function(total, item){
+        return total + item.price; 
+    },0);
+
+    }
+
+  },
+  
+  methods: {
+    packageSelected : function (e, checked) {
+      if (this.selectedOptionalPackage.length >0) {
+        this.selectedOptionalPackage = [];
+      }
+      if (checked) {
+        this.selectedOptionalPackage.push(e);
+      }
+      console.log(this.selectedOptionalPackage);
+    },
+    formatPrice(value) {
+        value = value/100; // prices are all in cents
+        let val = (value/1).toFixed(2).replace('.', ',')
+        return '€ ' + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+    },
+    initSelection: function(boat) {
+    this.selectedEquipment = [];
+    this.selectedEngine = {};
+    this.selectedOptionalPackage = {};
+    },
+     // submit form handler
+    submit: function() {
+      axios.post('https://us-central1-configurator-test-6a3f2.cloudfunctions.net/nmc-mail-fn', {
+    sendACopyToMe: this.sendACopyToMe,
+    firstName: this.firstName,
+    lastName: this.lastName,
+    email: this.email,
+    phone: this.phone,
+    contactMe: this.contactMe,
+    boat: this.selectedBoat.model,
+    engine: this.selectedEngine,
+    optionals: this.selectedEquipment,
+    packageName: this.selectedOptionalPackage[0]
+  })
+  .then(function (response) {
+    console.log(response);
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
+      this.submitted = true;
+    },
+    // validate by type and value
+    validate: function(type, value) {
+      if (type === "email") {
+        this.email.valid = this.isEmail(value) ? true : false;
+      }
+    },
+    // check for valid email adress
+    isEmail: function(value) {
+      return emailRegExp.test(value);
+    },
+    
+  },
+  mounted: function() {
+    var that = this;
+   db.collection("boat").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      
+      console.log(doc.id);
+      var standard = [];
+      var engineOptions = [];
+      var optionalFeatures = [];
+      var optionalPackages = [];
+      if (doc.data().equipment!==undefined) {
+      doc.data().equipment.forEach((eqz) => {
+        var ob = {'type':eqz.equipmentType, 'description':eqz.descriptionEn, 'details':eqz.detailsEn, 'price': eqz.priceExclVatInCents};
+        if (eqz.equipmentType === 'Standard Equipment') {
+          standard.push(ob);
+        } else if (eqz.equipmentType === 'boat + engine') {
+          engineOptions.push(ob);
+        } else if (eqz.equipmentType === 'Optional Equipment') {
+          optionalFeatures.push(ob);
+        } else if (eqz.equipmentType === 'Equipment packet') {
+          optionalPackages.push(ob);
+            console.log('adding' + eqz.equipmentType);
+                        console.log(ob);
+
+        }
+
+
+      });
+      }
+      var disBoat = {'id':doc.id, 'model':doc.data().model,
+                       'price':  0,
+                       'standard' : standard,
+                       'engineOptions' :engineOptions,
+                       'optionalFeatures' : optionalFeatures,
+                       'optionalPackages' : optionalPackages}
+      that.boats.push(disBoat);
+      console.log('loaded disboat');
+      if (that.selectedBoatModel.toLowerCase() === disBoat.model.toLowerCase()) {
+        console.log(` pre-selected = ${that.selectedBoatModel}`);
+        that.selectedBoat = disBoat;
+        that.selectedEngine = disBoat.engineOptions[0];
+
+      }
+
+    });
+});
+  }
+})
+   </script>
+  </body>
+</html>
