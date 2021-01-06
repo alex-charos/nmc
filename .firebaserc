@@ -1,6 +1,5 @@
 {
   "projects": {
-    "staging": "nmc-ui-test",
-    "production" :"nm-configurator"
+    "default": "nm-configurator"
   }
 }

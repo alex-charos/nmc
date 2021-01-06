@@ -4,17 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Nordic Marina Configurator</title>
-
+  <script src="config.js"></script>
    <script src="https://www.gstatic.com/firebasejs/8.0.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.0.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js" integrity="sha384-LtrjvnR4Twt/qOuYxE721u19sVFLVSA4hf/rRt6PrZTmiPltdZcI7q7PXQBYTKyf" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
+
 
     <style media="screen">
       body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
@@ -34,24 +31,114 @@
       #bottom {background: white;  overflow: hidden;   position: fixed; bottom: 0;  width: 100%; left:0;}
 
       #total-price {color: #060;}
+
+
+      .modal-mask {
+  position: fixed;
+  z-index: 9998;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: table;
+  transition: opacity 0.3s ease;
+}
+
+.modal-wrapper {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.modal-container {
+  width: 300px;
+  margin: 0px auto;
+  padding: 20px 30px;
+  background-color: #fff;
+  border-radius: 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+  transition: all 0.3s ease;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.modal-header h3 {
+  margin-top: 0;
+  color: #42b983;
+}
+
+.modal-body {
+  margin: 20px 0;
+}
+
+.modal-default-button {
+  float: right;
+}
+
+/*
+ * The following styles are auto-applied to elements with
+ * transition="modal" when their visibility is toggled
+ * by Vue.js.
+ *
+ * You can easily play with the modal transition by editing
+ * these styles.
+ */
+
+.modal-enter {
+  opacity: 0;
+}
+
+.modal-leave-active {
+  opacity: 0;
+}
+
+.modal-enter .modal-container,
+.modal-leave-active .modal-container {
+  -webkit-transform: scale(1.1);
+  transform: scale(1.1);
+}
+
+
+
     </style>
 
     <script>
-var firebaseConfig = {
-    apiKey: "AIzaSyAMbvIOKfCJbY57YKlB9EgLRzFXGitJCGQ",
-    authDomain: "configurator-test-6a3f2.firebaseapp.com",
-    databaseURL: "https://configurator-test-6a3f2.firebaseio.com",
-    projectId: "configurator-test-6a3f2",
-    storageBucket: "configurator-test-6a3f2.appspot.com",
-    messagingSenderId: "914511984873",
-    appId: "1:914511984873:web:9a2e41aa429f17389f1878"
-  };
+  
 
-  firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(config.firebase);
 
 
 var db = firebase.firestore();
 
+    </script>
+
+    <script type="text/x-template" id="modal-template">
+      <transition name="modal">
+        <div class="modal-mask">
+          <div class="modal-wrapper">
+            <div class="modal-container">
+
+              <div class="modal-header">
+                <slot name="header">
+                  Message Sent!
+                </slot>
+              </div>
+
+              <div class="modal-body">
+                <slot name="body">
+                  Thank you for communicating!
+                </slot>
+              </div>
+
+              <div class="modal-footer">
+                  <button class="modal-default-button" @click="$emit('close')">
+                    OK
+                  </button>
+                </slot>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
     </script>
   </head>
   <body>
@@ -156,7 +243,8 @@ var db = firebase.firestore();
     <br />
     <i>* Prices incl. delivery at our facility, excl. VAT. For a tailor made quotation please get in contact with us. </i>
     <p />
-   <!-- <form @submit.prevent="submit">
+   <!-- -->
+   <form @submit.prevent="submit">
     
         <div class="form-group row">
            <label class="col-sm-1 col-form-label" for="firstName">Name</label>
@@ -200,10 +288,13 @@ var db = firebase.firestore();
 
 
         <div>
-          <input type="submit" value="Send Request">
+          <input type="submit" value="Send Request" :disabled="submitting === true">
         </div>
     
-    </form> -->
+    </form> 
+
+          <modal v-if="showModal" @close="showModal = false">
+
   </div>
   </div>
 </div>
@@ -212,7 +303,9 @@ var db = firebase.firestore();
    // Regular expression from W3C HTML5.2 input specification:
 // https://www.w3.org/TR/html/sec-forms.html#email-state-typeemail
 var emailRegExp = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
+ Vue.component("modal", {
+        template: "#modal-template"
+      });
 var app = new Vue({
   el: '#app',
   data: {
@@ -228,7 +321,9 @@ var app = new Vue({
     phone:'',
     email: '',
     contactMe: false,
-    sendACopyToMe: false
+    sendACopyToMe: false,
+    submitting:false,
+    showModal:false
 
   
   },
@@ -309,25 +404,32 @@ var app = new Vue({
     },
      // submit form handler
     submit: function() {
-      axios.post('https://us-central1-configurator-test-6a3f2.cloudfunctions.net/nmc-mail-fn', {
-    sendACopyToMe: this.sendACopyToMe,
-    firstName: this.firstName,
-    lastName: this.lastName,
-    email: this.email,
-    phone: this.phone,
-    contactMe: this.contactMe,
-    boat: this.selectedBoat.model,
-    engine: this.selectedEngine,
-    optionals: this.selectedEquipment,
-    packageName: this.selectedOptionalPackage[0]
-  })
+      this.submitting = true;
+      var that = this;
+      axios.post(config.mailUrl, {
+            sendACopyToMe: this.sendACopyToMe,
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
+            phone: this.phone,
+            contactMe: this.contactMe,
+            boat: this.selectedBoat.model,
+            engine: this.selectedEngine,
+            optionals: this.selectedEquipment,
+            packageName: this.selectedOptionalPackage[0]
+          })
   .then(function (response) {
-    console.log(response);
+    that.submitting = false;
+    that.showModal = true;
+   
   })
   .catch(function (error) {
-    console.log(error);
+        that.submitting = false;
+        that.showModal = false;
+        alert('Some error seems to have occured. Please try again later...');
+
+
   });
-      this.submitted = true;
     },
     // validate by type and value
     validate: function(type, value) {
