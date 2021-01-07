@@ -325,10 +325,13 @@ var app = new Vue({
             email: this.email,
             phone: this.phone,
             contactMe: this.contactMe,
-            boat: this.selectedBoat.model,
+            boat:  
+                {'model': this.selectedBoat.model,
+                'standard':this.selectedBoat.standard
+              },
             engine: this.selectedEngine,
             optionals: this.selectedEquipment,
-            packageName: this.selectedOptionalPackage[0],
+            packages: this.selectedOptionalPackage,
             price: this.total,
 
           })
