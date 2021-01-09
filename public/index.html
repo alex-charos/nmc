@@ -372,14 +372,15 @@ var app = new Vue({
       if (doc.data().equipment!==undefined) {
       doc.data().equipment.forEach((eqz) => {
         var ob = {'type':eqz.equipmentType, 'description':eqz.descriptionEn, 'details':eqz.detailsEn, 'price': eqz.priceExclVatInCents};
-        if (eqz.equipmentType === 'Standard Equipment') {
+        if (eqz.equipmentType.toLowerCase() === 'standard equipment') {
           standard.push(ob);
-        } else if (eqz.equipmentType === 'boat + engine') {
+        } else if (eqz.equipmentType.toLowerCase() === 'boat + engine') {
           engineOptions.push(ob);
-        } else if (eqz.equipmentType === 'Optional Equipment') {
+        } else if (eqz.equipmentType.toLowerCase() === 'optional equipment') {
           optionalFeatures.push(ob);
-        } else if (eqz.equipmentType === 'Equipment packet') {
+        } else if (eqz.equipmentType.toLowerCase() === 'equipment packet') {
           optionalPackages.push(ob);
+         
         }
 
 
